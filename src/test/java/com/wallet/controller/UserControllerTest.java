@@ -20,8 +20,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.util.Optional;
-
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -31,8 +30,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class UserControllerTest {
 
     private static final String EMAIL = "email@teste.com";
-    public static final String PASSWORD = "123";
+    public static final String PASSWORD = "123456";
     public static final String NAME = "User Test";
+    public static final Long ID = 1L;
     public static final String URL = "/users";
 
     @MockBean
@@ -48,13 +48,27 @@ public class UserControllerTest {
     @Test
     public void testSave() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post(URL)
-                .content(this.getJsonPayload())
+                .content(this.getJsonPayload(ID, EMAIL, NAME, PASSWORD))
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.id").value(ID))
+                .andExpect(jsonPath("$.data.name").value(NAME))
+                .andExpect(jsonPath("$.data.email").value(EMAIL))
+                .andExpect(jsonPath("$.data.password").doesNotExist());
+    }
+
+    @Test
+    public void testSaveInvalidUser() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post(URL)
+                        .content(this.getJsonPayload(ID, "email", NAME, PASSWORD))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0]").value("Email inválido"));
     }
 
     private User getMockUser() {
         User user = new User();
+        user.setId(ID);
         user.setName(NAME);
         user.setPassword(PASSWORD);
         user.setEmail(EMAIL);
@@ -63,11 +77,12 @@ public class UserControllerTest {
     }
 
 
-    private String getJsonPayload() throws JsonProcessingException {
+    private String getJsonPayload(Long id, String email, String name, String password) throws JsonProcessingException {
         UserDTO dto = new UserDTO();
-        dto.setName(NAME);
-        dto.setPassword(PASSWORD);
-        dto.setEmail(EMAIL);
+        dto.setId(id);
+        dto.setName(name);
+        dto.setPassword(password);
+        dto.setEmail(email);
 
         ObjectMapper mapper = new ObjectMapper();
         return mapper.writeValueAsString(dto);
