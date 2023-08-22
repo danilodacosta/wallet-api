@@ -21,5 +21,6 @@ public class Wallet implements Serializable {
     private String name;
 
     @NotNull
+    @Column(name="`value`")
     private BigDecimal value;
 }
