@@ -8,8 +8,8 @@ public class Bcrypt {
             return null;
         }
 
-        BCryptPasswordEncoder enconder = new BCryptPasswordEncoder();
-        return enconder.encode(password);
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        return encoder.encode(password);
 
     }
 }
